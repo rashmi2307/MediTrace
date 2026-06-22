@@ -1,0 +1,42 @@
+spec_version: '1.0'
+app_name: meditrace
+description: Multi-agent prescription safety system
+
+agents:
+  - name: orchestrator
+    type: LlmAgent
+    model: gemini-2.0-flash
+    sub_agents: [drug_extractor, interaction_checker, risk_assessor, report_generator]
+    memory: patient_memory
+    guardrails:
+      input: input_guard
+      output: output_guard
+
+  - name: drug_extractor
+    type: LlmAgent
+    model: gemini-2.0-flash
+    output_schema: DrugList
+
+  - name: interaction_checker
+    type: LlmAgent
+    model: gemini-2.0-flash
+    tools: [openfda_mcp, rxnav_mcp, web_search]
+
+  - name: risk_assessor
+    type: LlmAgent
+    model: gemini-2.0-flash
+    memory: patient_memory
+
+  - name: report_generator
+    type: LlmAgent
+    model: gemini-2.0-flash
+    output_schema: PatientReport
+
+memory:
+  patient_memory:
+    type: InMemoryMemoryService   # change to VertexAiMemoryService for prod
+
+observability:
+  logging: cloud_logging
+  tracing: true
+  metrics: true

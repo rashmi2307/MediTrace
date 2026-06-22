@@ -1,5 +1,7 @@
+import os
 from google.adk.agents import LlmAgent
 from pydantic import BaseModel, Field
+from models.local_mock import LocalMockModel
 
 class DrugEntry(BaseModel):
     name: str = Field(description="Generic name of the drug, in lowercase. If unknown, use the brand name.")
@@ -18,12 +20,17 @@ DRUG_EXTRACTOR_PROMPT = (
 
 drug_extractor_agent = LlmAgent(
     name="drug_extractor",
-    model="gemini-2.0-flash",
+    model=LocalMockModel() if not os.environ.get("USE_REAL_LLM") else "gemini-2.0-flash",
     instruction=DRUG_EXTRACTOR_PROMPT,
     output_schema=DrugList,
     description="Extracts a structured list of drugs, dosages, and frequencies from raw text or prescription images."
 )
 
+def extract_drugs_deterministic(user_input: str) -> list[str]:
+    import re
+    words = re.split(r'[, ]+', user_input)
+    extracted = [w.strip().lower() for w in words if len(w) > 4 and w.lower() not in {"this", "that", "image", "uploaded"}]
+    return extracted
 if __name__ == "__main__":
     import asyncio
     from google.adk.runners import Runner

@@ -1,7 +1,9 @@
+import asyncio
+import uuid
 from agents.orchestrator import run_meditrace
 
 
-def main():
+async def main():
     print("MediTrace — Medication Safety Checker")
     print("Enter medicines separated by commas.")
     print("Example: metformin, ibuprofen")
@@ -9,20 +11,16 @@ def main():
 
     user_input = input("Medicines: ")
 
-    medications = [
-        med.strip().lower()
-        for med in user_input.split(",")
-        if med.strip()
-    ]
-
-    if len(medications) < 2:
-        print("Please enter at least two medicines.")
+    if not user_input.strip():
+        print("Please enter some medicines.")
         return
 
-    report = run_meditrace(medications)
+    print("\nChecking interactions and generating report...\n")
+    session_id = str(uuid.uuid4())
+    report = await run_meditrace(user_input, "cli_user", session_id)
     print()
     print(report)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
