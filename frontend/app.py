@@ -55,20 +55,12 @@ med_input = st.text_area(
     key="med_input",
 )
 
-uploaded_file = st.file_uploader(
-    "Or upload a prescription image (.jpg, .png)",
-    type=["jpg", "png"],
-)
-
 
 if st.button("Check safety"):
     user_query = med_input.strip()
 
-    if uploaded_file:
-        user_query = f"{user_query} [Image uploaded: {uploaded_file.name}]".strip()
-
     if not user_query:
-        st.error("Please enter at least two medicines or upload a prescription.")
+        st.error("Please enter at least two medicines.")
     else:
         session_id = str(uuid.uuid4())
 

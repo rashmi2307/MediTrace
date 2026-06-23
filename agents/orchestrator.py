@@ -13,7 +13,7 @@ from agents.report_generator import report_generator_agent
 
 ORCHESTRATOR_PROMPT = (
     "You are the main orchestrator for the MediTrace safety system. "
-    "When the user provides a list of medications (or a prescription image), you must: "
+    "When the user provides a list of medications, you must: "
     "1. Delegate to drug_extractor to get a structured list. "
     "2. Pass that list to interaction_checker. "
     "3. Pass the interactions to risk_assessor. "
@@ -120,7 +120,7 @@ async def run_meditrace(user_input: str, user_id: str, session_id: str) -> str:
     # 4. Save to memory if we didn't already
     if use_real_llm:
         import re
-        extracted = [w.strip().capitalize() for w in re.split(r'[, ]+', user_input) if len(w) > 4 and w.lower() not in {"this", "that", "image", "uploaded"}]
+        extracted = [w.strip().capitalize() for w in re.split(r'[, ]+', user_input) if len(w) > 4 and w.lower() not in {"this", "that"}]
         if not extracted:
             extracted = ["Drug A", "Drug B"]
         memory_service.store_medications(user_id, extracted)

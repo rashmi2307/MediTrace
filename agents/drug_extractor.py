@@ -12,7 +12,7 @@ class DrugList(BaseModel):
     drugs: list[DrugEntry] = Field(description="A clean, deduplicated list of drugs with dosages and frequencies")
 
 DRUG_EXTRACTOR_PROMPT = (
-    "Extract all medication names and dosages from the following text or image. "
+    "Extract all medication names and dosages from the following text. "
     "Return ONLY a JSON array of objects with keys: name (generic name, lowercase), "
     "dosage (string, e.g. \"10mg\"), frequency (string, e.g. \"twice daily\"). "
     "If the generic name is unknown, use the brand name. Deduplicate. Return nothing else."
@@ -23,13 +23,13 @@ drug_extractor_agent = LlmAgent(
     model=LocalMockModel() if not os.environ.get("USE_REAL_LLM") else "gemini-2.0-flash",
     instruction=DRUG_EXTRACTOR_PROMPT,
     output_schema=DrugList,
-    description="Extracts a structured list of drugs, dosages, and frequencies from raw text or prescription images."
+    description="Extracts a structured list of drugs, dosages, and frequencies from raw text."
 )
 
 def extract_drugs_deterministic(user_input: str) -> list[str]:
     import re
     words = re.split(r'[, ]+', user_input)
-    extracted = [w.strip().lower() for w in words if len(w) > 4 and w.lower() not in {"this", "that", "image", "uploaded"}]
+    extracted = [w.strip().lower() for w in words if len(w) > 4 and w.lower() not in {"this", "that"}]
     return extracted
 if __name__ == "__main__":
     import asyncio
