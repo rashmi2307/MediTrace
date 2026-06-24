@@ -47,17 +47,17 @@ def generate_report_deterministic(risk_assessment: dict, medications: list[str])
             
             card = []
             card.append(f"### {drug_a} & {drug_b}")
-            card.append(f"**Severity:** {severity_badge}")
-            card.append(f"**Source:** {r['source']}")
-            card.append(f"**Explanation:** {r['description']}")
+            card.append(f"\n**Severity:** {severity_badge}")
+            card.append(f"\n**Source:** {r['source']}")
+            card.append(f"\n**Explanation:** {r['description']}")
             
             top_reactions = r.get('top_reactions', [])
             if top_reactions:
-                card.append("**Top reported adverse events:**")
+                card.append("\n**Top reported adverse events:**")
                 for reaction in top_reactions:
                     card.append(f"- {reaction}")
             
-            card.append(f"**Recommended Action:** {r['action']}")
+            card.append(f"\n**Recommended Action:** {r['action']}")
             card.append("")
             
             card_str = "\n".join(card)
@@ -92,4 +92,4 @@ def generate_report_deterministic(risk_assessment: dict, medications: list[str])
     lines.append("## Disclaimer")
     lines.append("This report is for information only. It is not medical advice. Always confirm with your doctor or pharmacist before changing any medication.")
     
-    return "\n".join(lines)
+    return "\n".join(lines)

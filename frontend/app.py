@@ -69,9 +69,6 @@ if st.button("Check safety"):
         st.session_state["last_input"] = user_query
         st.session_state["last_session_id"] = session_id
 
-        st.caption(f"DEBUG input sent: {user_query}")
-        st.caption(f"DEBUG session id: {session_id}")
-
         status_placeholder = st.empty()
         status_placeholder.info("⏳ Extracting medications...")
 
