@@ -65,11 +65,30 @@ def generate_report_deterministic(risk_assessment: dict, medications: list[str])
             
             if r["severity"] == "moderate":
                 watch_out_lines.append(card_str)
-                why_this_matters.append(f"- {drug_a} + {drug_b}: Monitoring is advised to prevent adverse symptoms.")
             elif r["severity"] == "major":
                 see_doctor_lines.append(card_str)
-                why_this_matters.append(f"- {drug_a} + {drug_b}: This carries severe risks such as bleeding or kidney issues and requires medical oversight.")
+                
+        # Generate cohesive physician-style summary
+        major_pairs = [f"{r['drug_a'].capitalize()} and {r['drug_b'].capitalize()}" for r in risks if r["severity"] == "major"]
+        mod_pairs = [f"{r['drug_a'].capitalize()} and {r['drug_b'].capitalize()}" for r in risks if r["severity"] == "moderate"]
         
+        if major_pairs:
+            pairs_str = ", ".join(major_pairs)
+            summary = (
+                f"The concurrent use of {pairs_str} is clinically concerning due to severe adverse events reported in OpenFDA and RxNav. "
+                "Available evidence indicates this combination may lead to acute complications requiring medical oversight. "
+                "The patient must immediately consult their healthcare provider to evaluate safer pharmacological alternatives."
+            )
+            why_this_matters.append(summary)
+        elif mod_pairs:
+            pairs_str = ", ".join(mod_pairs)
+            summary = (
+                f"The co-administration of {pairs_str} warrants clinical monitoring based on available FDA adverse event reports. "
+                "While not strictly contraindicated, this combination can interact to produce undesirable physiological side effects. "
+                "The patient should discuss this regimen with a pharmacist or physician to ensure appropriate safety monitoring."
+            )
+            why_this_matters.append(summary)
+            
         if watch_out_lines:
             watch_out = "\n".join(watch_out_lines)
         if see_doctor_lines:
