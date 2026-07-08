@@ -11,16 +11,134 @@ sys.path.append(str(ROOT))
 from agents.orchestrator import run_meditrace
 from memory.patient_memory import memory_service
 
-
 USER_ID = "demo_user"
 
-
+# -----------------------------
+# Page Configuration
+# -----------------------------
 st.set_page_config(
     page_title="MediTrace — Medication Safety Checker",
     page_icon="💊",
     layout="wide",
 )
 
+# -----------------------------
+# Theme & Typography CSS Injection
+# -----------------------------
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+    /* Global Font Override */
+    html, body, [class*="css"], .stMarkdown {
+        font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    }
+
+    /* Custom CSS variables */
+    :root {
+        --primary-color: #0f766e;
+        --primary-hover: #0d9488;
+        --card-bg: var(--secondary-background-color);
+        --border-color: rgba(128, 128, 128, 0.15);
+    }
+
+    /* Sidebar Styling */
+    section[data-testid="stSidebar"] {
+        background-color: var(--secondary-background-color);
+        border-right: 1px solid var(--border-color);
+    }
+
+    .patient-profile-card {
+        background-color: rgba(128, 128, 128, 0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    /* Hero Section */
+    .hero-section {
+        text-align: center;
+        padding: 30px 20px;
+        background: linear-gradient(135deg, rgba(15, 118, 110, 0.1) 0%, rgba(13, 148, 136, 0.05) 100%);
+        border-radius: 16px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(15, 118, 110, 0.15);
+    }
+
+    .hero-title {
+        font-size: 2.8em;
+        font-weight: 800;
+        margin: 0;
+        background: linear-gradient(90deg, #0f766e 0%, #0d9488 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+        font-size: 1.1em;
+        opacity: 0.8;
+        margin-top: 8px;
+        font-weight: 500;
+    }
+
+    /* Styled Pills */
+    .pill-badge {
+        background-color: rgba(15, 118, 110, 0.1);
+        color: #0f766e;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9em;
+        display: inline-block;
+        border: 1px solid rgba(15, 118, 110, 0.2);
+    }
+
+    /* Disclaimer Box */
+    .disclaimer-box {
+        background-color: rgba(239, 68, 68, 0.04);
+        border-left: 5px solid #ef4444;
+        border-radius: 4px 12px 12px 4px;
+        padding: 16px;
+        margin-top: 30px;
+        border-top: 1px solid rgba(239, 68, 68, 0.1);
+        border-right: 1px solid rgba(239, 68, 68, 0.1);
+        border-bottom: 1px solid rgba(239, 68, 68, 0.1);
+    }
+
+    .disclaimer-title {
+        font-weight: 700;
+        color: #ef4444;
+        font-size: 1.0em;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Printable Area Print CSS */
+    @media print {
+        header, footer, section[data-testid="stSidebar"], .stButton, .stTextArea, .no-print, [data-testid="stHeader"] {
+            display: none !important;
+        }
+        body * {
+            visibility: hidden;
+        }
+        #printable-area, #printable-area * {
+            visibility: visible;
+        }
+        #printable-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100% !important;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 # -----------------------------
 # Sidebar: Patient Profile
@@ -32,35 +150,237 @@ try:
 except Exception:
     history = []
 
+profile_html = "<div class='patient-profile-card'>"
 if history:
-    st.sidebar.write("**Past Medications:**")
+    profile_html += "<strong>Past Medications:</strong><ul style='margin: 8px 0 0 20px; padding:0;'>"
     for med in history:
-        st.sidebar.write(f"- {med}")
+        profile_html += f"<li>{med.capitalize()}</li>"
+    profile_html += "</ul>"
 else:
-    st.sidebar.write("No medication history found.")
+    profile_html += "No medication history found."
+profile_html += "</div>"
 
-st.sidebar.write("**Known Allergies:** None documented")
-st.sidebar.write("**Conditions:** None documented")
+st.sidebar.markdown(profile_html, unsafe_allow_html=True)
 
-
-# -----------------------------
-# Main App
-# -----------------------------
-st.title("💊 MediTrace")
-st.subheader("Medication Safety Checker")
-
-med_input = st.text_area(
-    "Enter your medicines separated by commas",
-    placeholder="Example: metformin, ibuprofen",
-    key="med_input",
+st.sidebar.markdown(
+    """
+    <div class='patient-profile-card'>
+        <strong>Known Allergies:</strong><br/>
+        <span style='color: grey;'>None documented</span>
+    </div>
+    <div class='patient-profile-card'>
+        <strong>Conditions:</strong><br/>
+        <span style='color: grey;'>None documented</span>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
 
+# -----------------------------
+# Theme Selection Overrides
+# -----------------------------
+st.sidebar.markdown("---")
+st.sidebar.write("**Settings**")
 
-if st.button("Check safety"):
+theme_choice = st.sidebar.radio("App Theme Override", ["Auto / System", "Light Mode", "Dark Mode"], horizontal=True)
+
+if theme_choice == "Dark Mode":
+    st.markdown(
+        """
+        <style>
+        /* Override Streamlit Native Variables */
+        :root {
+            --background-color: #0E1117 !important;
+            --secondary-background-color: #262730 !important;
+            --text-color: #FAFAFA !important;
+            color-scheme: dark !important;
+        }
+        /* Force container backgrounds */
+        [data-testid="stAppViewContainer"], .stApp {
+            background-color: #0E1117 !important;
+            color: #FAFAFA !important;
+        }
+        [data-testid="stSidebar"] {
+            background-color: #262730 !important;
+        }
+        [data-testid="stHeader"] {
+            background-color: rgba(14, 17, 23, 0.8) !important;
+        }
+        /* Typography - explicitly force text color against Streamlit's native Light Mode inheritance */
+        .stMarkdown p, .stMarkdown li, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6, 
+        label, .stText, .stSidebar p, .stSidebar h1, .stSidebar h2, .stSidebar h3, .stSidebar h4, .stSidebar h5, .stSidebar h6, .stSidebar li, .stSidebar strong {
+            color: #FAFAFA !important;
+        }
+        /* Buttons */
+        button[kind="secondary"] {
+            background-color: #262730 !important;
+            color: #FAFAFA !important;
+            border-color: rgba(250, 250, 250, 0.2) !important;
+        }
+        button[kind="secondary"] p, button[kind="secondary"] span {
+            color: #FAFAFA !important;
+        }
+        button[kind="primary"] {
+            background-color: #0f766e !important;
+            color: #FFFFFF !important;
+            border-color: #0f766e !important;
+        }
+        button[kind="primary"] p, button[kind="primary"] span {
+            color: #FFFFFF !important;
+        }
+        /* Form Inputs */
+        .stTextArea textarea {
+            background-color: #262730 !important;
+            color: #FAFAFA !important;
+            border-color: rgba(250, 250, 250, 0.2) !important;
+        }
+        /* Revert specific custom colored elements */
+        .pill-badge { color: #0f766e !important; }
+        .disclaimer-title, .disclaimer-title span { color: #ef4444 !important; }
+        /* Update our custom cards */
+        :root {
+            --card-bg: #262730 !important;
+            --border-color: rgba(250, 250, 250, 0.1) !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+elif theme_choice == "Light Mode":
+    st.markdown(
+        """
+        <style>
+        /* Override Streamlit Native Variables */
+        :root {
+            --background-color: #FFFFFF !important;
+            --secondary-background-color: #F0F2F6 !important;
+            --text-color: #31333F !important;
+            color-scheme: light !important;
+        }
+        /* Force container backgrounds */
+        [data-testid="stAppViewContainer"], .stApp {
+            background-color: #FFFFFF !important;
+            color: #31333F !important;
+        }
+        [data-testid="stSidebar"] {
+            background-color: #F0F2F6 !important;
+        }
+        [data-testid="stHeader"] {
+            background-color: rgba(255, 255, 255, 0.8) !important;
+        }
+        /* Typography - explicitly force text color against Streamlit's native Dark Mode inheritance */
+        .stMarkdown p, .stMarkdown li, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6, 
+        label, .stText, .stSidebar p, .stSidebar h1, .stSidebar h2, .stSidebar h3, .stSidebar h4, .stSidebar h5, .stSidebar h6, .stSidebar li, .stSidebar strong {
+            color: #31333F !important;
+        }
+        /* Buttons */
+        button[kind="secondary"] {
+            background-color: #FFFFFF !important;
+            color: #31333F !important;
+            border-color: rgba(49, 51, 63, 0.2) !important;
+        }
+        button[kind="secondary"] p, button[kind="secondary"] span {
+            color: #31333F !important;
+        }
+        button[kind="primary"] {
+            background-color: #0f766e !important;
+            color: #FFFFFF !important;
+            border-color: #0f766e !important;
+        }
+        button[kind="primary"] p, button[kind="primary"] span {
+            color: #FFFFFF !important;
+        }
+        /* Form Inputs */
+        .stTextArea textarea {
+            background-color: #FFFFFF !important;
+            color: #31333F !important;
+            border-color: rgba(49, 51, 63, 0.2) !important;
+        }
+        /* Revert specific custom colored elements */
+        .pill-badge { color: #0f766e !important; }
+        .disclaimer-title, .disclaimer-title span { color: #ef4444 !important; }
+        /* Update our custom cards */
+        :root {
+            --card-bg: #FFFFFF !important;
+            --border-color: rgba(49, 51, 63, 0.1) !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+else:
+    st.markdown(
+        """
+        <style>
+        :root {
+            --card-bg: var(--secondary-background-color);
+            --border-color: rgba(128, 128, 128, 0.15);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# -----------------------------
+# Hero Section
+# -----------------------------
+st.markdown(
+    """
+    <div class="hero-section">
+        <div style="font-size: 3.5em; margin-bottom: 5px;">💊</div>
+        <h1 class="hero-title">MediTrace</h1>
+        <div class="hero-subtitle">AI-powered Medication Safety Assistant</div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# -----------------------------
+# Main Application Logic
+# -----------------------------
+med_input = st.text_area(
+    "Enter your medications (separated by commas)",
+    placeholder="Example: metformin, ibuprofen, aspirin, cetirizine",
+    key="med_input",
+    height=120,
+)
+
+col_btn, col_actions = st.columns([2, 3])
+
+with col_btn:
+    analyze_clicked = st.button("🔍 Analyze Medications", type="primary", use_container_width=True)
+
+with col_actions:
+    # Print, Rerun, and Clear History row in standard Streamlit UI
+    sub_col1, sub_col2, sub_col3 = st.columns(3)
+    with sub_col1:
+        print_clicked = st.button("🖨️ Print Report", use_container_width=True)
+    with sub_col2:
+        rerun_clicked = st.button("🔄 Rerun App", use_container_width=True)
+    with sub_col3:
+        clear_clicked = st.button("🗑️ Clear Profile", use_container_width=True)
+
+# Print execution via JS injection
+if print_clicked:
+    st.components.v1.html(
+        "<script>window.parent.print();</script>",
+        height=0,
+        width=0,
+    )
+
+if rerun_clicked:
+    st.rerun()
+
+if clear_clicked:
+    st.session_state.clear()
+    st.success("State cleared.")
+    st.rerun()
+
+if analyze_clicked:
     user_query = med_input.strip()
 
     if not user_query:
-        st.error("Please enter at least two medicines.")
+        st.error("Please enter at least two medications.")
     else:
         session_id = str(uuid.uuid4())
 
@@ -91,14 +411,266 @@ if st.button("Check safety"):
             st.exception(e)
 
 
+# -----------------------------
+# Markdown / Card Parser Functions
+# -----------------------------
+def clean_html(html_str: str) -> str:
+    return "\n".join([line.strip() for line in html_str.split("\n")])
+
+def parse_markdown_report(report_text: str):
+    sections = {}
+    current_section = None
+    current_lines = []
+    
+    for line in report_text.split('\n'):
+        stripped = line.strip()
+        if stripped.startswith('## '):
+            if current_section:
+                sections[current_section] = '\n'.join(current_lines).strip()
+            current_section = stripped[3:].strip()
+            current_lines = []
+        else:
+            current_lines.append(line)
+            
+    if current_section:
+        sections[current_section] = '\n'.join(current_lines).strip()
+        
+    return sections
+
+def parse_interaction_cards(section_text: str):
+    if not section_text or section_text.strip() == "None":
+        return []
+        
+    cards = []
+    current_card = None
+    lines = section_text.split('\n')
+    
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('### '):
+            if current_card:
+                cards.append(current_card)
+            current_card = {
+                "pair": stripped[4:].strip(),
+                "severity": "",
+                "source": "",
+                "explanation": "",
+                "reactions": [],
+                "recommendation": ""
+            }
+        elif current_card:
+            if stripped.startswith("**Severity:**"):
+                current_card["severity"] = stripped.replace("**Severity:**", "").strip()
+            elif stripped.startswith("**Source:**"):
+                current_card["source"] = stripped.replace("**Source:**", "").strip()
+            elif stripped.startswith("**Explanation:**"):
+                current_card["explanation"] = stripped.replace("**Explanation:**", "").strip()
+            elif stripped.startswith("- ") and not stripped.startswith("**"):
+                current_card["reactions"].append(stripped[2:].strip())
+            elif stripped.startswith("**Recommended Action:**"):
+                current_card["recommendation"] = stripped.replace("**Recommended Action:**", "").strip()
+                
+    if current_card:
+        cards.append(current_card)
+        
+    return cards
+
+def parse_medications(meds_text: str):
+    meds = []
+    for line in meds_text.split('\n'):
+        stripped = line.strip()
+        if stripped.startswith('- '):
+            meds.append(stripped[2:].strip())
+    return meds
+
+def render_interaction_card(card: dict, severity_level: str):
+    if severity_level == "major":
+        badge_color = "#ef4444"
+        badge_text = "🔴 Major Risk"
+    elif severity_level == "moderate":
+        badge_color = "#f59e0b"
+        badge_text = "🟡 Moderate Risk"
+    else:
+        badge_color = "#10b981"
+        badge_text = "🟢 Safe"
+        
+    reactions_html = "".join([f"<li>{r}</li>" for r in card["reactions"]])
+    reactions_section = f"""
+    <div style="margin-top: 10px;">
+        <span style="font-weight: 600; font-size: 0.9em; opacity: 0.85;">Top reported adverse events:</span>
+        <ul style="margin: 5px 0 0 20px; padding: 0; font-size: 0.95em;">
+            {reactions_html}
+        </ul>
+    </div>
+    """ if card["reactions"] else ""
+
+    card_html = f"""
+    <div class="interaction-card" style="
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background-color: var(--card-bg);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    ">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 12px;">
+            <h3 style="margin: 0; font-size: 1.2em; font-weight: 700;">{card["pair"]}</h3>
+            <span style="background-color: {badge_color}22; color: {badge_color}; border: 1px solid {badge_color}44; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 0.85em;">{badge_text}</span>
+        </div>
+        <div style="font-size: 0.95em; line-height: 1.55;">
+            <div style="margin-bottom: 10px;">
+                <span style="font-weight: 600; opacity: 0.85;">Explanation:</span> {card["explanation"]}
+            </div>
+            {reactions_section}
+            <div style="margin-top: 12px; padding: 10px 14px; background-color: {badge_color}11; border-left: 4px solid {badge_color}; border-radius: 0 8px 8px 0;">
+                <span style="font-weight: 600; color: {badge_color};">Recommendation:</span> {card["recommendation"]}
+            </div>
+            <div style="margin-top: 12px; font-size: 0.85em; opacity: 0.7; display: flex; align-items: center; gap: 4px;">
+                <span>📂 Evidence Source:</span> <strong>{card["source"]}</strong>
+            </div>
+        </div>
+    </div>
+    """
+    st.markdown(clean_html(card_html), unsafe_allow_html=True)
+
+
+# -----------------------------
+# Report Display Render
+# -----------------------------
 if st.session_state.get("last_report"):
-    st.markdown(st.session_state["last_report"])
+    report = st.session_state["last_report"]
+    
+    st.markdown("<hr/>", unsafe_allow_html=True)
+    
+    # Check if report is an extraction warning/error
+    if "I could not detect at least two valid medications" in report or "Input rejected" in report:
+        st.warning(report)
+    else:
+        try:
+            sections = parse_markdown_report(report)
+            
+            # Wrap the printable area in a div
+            st.markdown('<div id="printable-area">', unsafe_allow_html=True)
+            
+            # Custom Printable Header
+            st.markdown(
+                clean_html("""
+                <div style="border-bottom: 2px solid #0f766e; padding-bottom: 10px; margin-bottom: 25px;">
+                    <h2 style="margin: 0; color: #0f766e; font-weight: 800;">📋 Medication Safety Report</h2>
+                    <span style="font-size: 0.85em; color: grey;">Generated by MediTrace Clinical Safety Agent</span>
+                </div>
+                """),
+                unsafe_allow_html=True
+            )
+            
+            # 1. Medications pill badges
+            if "Your medications" in sections:
+                meds = parse_medications(sections["Your medications"])
+                meds_pills = "".join([f'<span class="pill-badge" style="margin-right: 8px; margin-bottom: 8px;">{m}</span>' for m in meds])
+                st.markdown(
+                    clean_html(f"""
+                    <div style="margin-bottom: 25px;">
+                        <h4 style="margin-top: 0; margin-bottom: 12px; font-weight: 700;">Medications Checked</h4>
+                        <div style="display: flex; flex-wrap: wrap;">
+                            {meds_pills}
+                        </div>
+                    </div>
+                    """),
+                    unsafe_allow_html=True
+                )
+                
+            # 2. Major Risks (See a doctor today)
+            if "See a doctor today" in sections:
+                major_cards = parse_interaction_cards(sections["See a doctor today"])
+                if major_cards:
+                    st.markdown('<h4 style="color: #ef4444; font-weight: 700; margin-top: 25px; margin-bottom: 12px;">🔴 Major Risks - Immediate Doctor Visit Required</h4>', unsafe_allow_html=True)
+                    for card in major_cards:
+                        render_interaction_card(card, "major")
+                        
+            # 3. Moderate Risks (Watch out for)
+            if "Watch out for" in sections:
+                mod_cards = parse_interaction_cards(sections["Watch out for"])
+                if mod_cards:
+                    st.markdown('<h4 style="color: #f59e0b; font-weight: 700; margin-top: 25px; margin-bottom: 12px;">🟡 Moderate Risks - Monitoring Advised</h4>', unsafe_allow_html=True)
+                    for card in mod_cards:
+                        render_interaction_card(card, "moderate")
+                        
+            # 4. Safe Section (What looks safe)
+            if "What looks safe" in sections:
+                safe_text = sections["What looks safe"]
+                if safe_text and safe_text.strip() != "None" and "Everything looks safe" in safe_text:
+                    st.markdown(
+                        clean_html(f"""
+                        <div class="interaction-card" style="border: 1px solid #10b981; border-radius: 12px; padding: 20px; margin-bottom: 20px; background-color: rgba(16, 185, 129, 0.04);">
+                            <div style="display: flex; align-items: center; gap: 8px; color: #10b981; font-weight: 700; font-size: 1.1em; margin-bottom: 8px;">
+                                <span>🟢</span> What Looks Safe
+                            </div>
+                            <div style="font-size: 0.95em; line-height: 1.5;">
+                                {safe_text}
+                            </div>
+                        </div>
+                        """),
+                        unsafe_allow_html=True
+                    )
+                    
+            # 5. Why this matters (Context)
+            if "Why this matters" in sections:
+                why_text = sections["Why this matters"]
+                if why_text and why_text.strip() != "None":
+                    # Convert list to nice layout
+                    why_html = ""
+                    for item in why_text.split('\n'):
+                        item_stripped = item.strip()
+                        if item_stripped.startswith('- '):
+                            why_html += f"<li style='margin-bottom: 8px;'>{item_stripped[2:]}</li>"
+                    
+                    if why_html:
+                        st.markdown(
+                            clean_html(f"""
+                            <div style="margin-top: 30px; margin-bottom: 25px;">
+                                <h4 style="margin-top: 0; margin-bottom: 12px; font-weight: 700;">📝 Clinical Summary</h4>
+                                <div style="font-size: 0.95em; line-height: 1.55; background-color: rgba(128, 128, 128, 0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px;">
+                                    <ul style="margin: 0; padding-left: 20px;">
+                                        {why_html}
+                                    </ul>
+                                </div>
+                            </div>
+                            """),
+                            unsafe_allow_html=True
+                        )
+            
+            # 6. Disclaimer info box
+            if "Disclaimer" in sections:
+                disc_text = sections["Disclaimer"]
+            else:
+                disc_text = "This report is for information only. It is not medical advice. Always confirm with your doctor or pharmacist before changing any medication."
+                
+            st.markdown(
+                clean_html(f"""
+                <div class="disclaimer-box">
+                    <div class="disclaimer-title">
+                        <span>⚠️</span> Medical Safety Disclaimer
+                    </div>
+                    <div style="font-size: 0.9em; color: #b91c1c; line-height: 1.5; font-weight: 500;">
+                        {disc_text}
+                    </div>
+                </div>
+                """),
+                unsafe_allow_html=True
+            )
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+        except Exception as e:
+            # Safe Fallback to plain markdown
+            st.error("Custom card rendering encountered an error. Showing plain report text.")
+            st.markdown(report)
 
-
+# Footer
 st.markdown("---")
 st.markdown(
-    "<div style='text-align: center; color: grey;'>"
-    "MediTrace is for information only. Not a substitute for professional medical advice."
+    "<div style='text-align: center; color: grey; font-size: 0.85em;'>"
+    "MediTrace Medication Safety Checker &copy; 2026. For educational and Capstone demonstration purposes only."
     "</div>",
     unsafe_allow_html=True,
 )
