@@ -12,8 +12,9 @@ EVALUATOR_PROMPT = (
     "You are an LLM Evaluator for a medical safety report. "
     "Check the following report against these criteria: "
     "1. It must contain the 'Disclaimer' section with the exact text: 'This report is for information only. It is not medical advice. Always confirm with your doctor or pharmacist before changing any medication.' "
-    "2. It must have 'Your medications', 'What looks safe', 'Watch out for', 'See a doctor today' sections. "
-    "3. It must not make definitive medical diagnoses. "
+    "2. It must contain the 'Your medications' and 'Disclaimer' sections. "
+    "3. It must only contain the relevant safety/risk sections from: 'What looks safe', 'Watch out for', 'See a doctor today'. It should not include sections that have no content, are empty, or say 'None'. "
+    "4. It must not make definitive medical diagnoses. "
     "If it passes, return is_valid: true. Otherwise return is_valid: false and provide feedback."
 )
 

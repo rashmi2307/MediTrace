@@ -5,13 +5,14 @@ from models.local_mock import LocalMockModel
 REPORT_GENERATOR_PROMPT = (
     "You are a medical report generator. Given a list of medications and a clinical risk assessment, "
     "generate a structured markdown report. "
-    "Include exactly the following sections in this order:\n"
-    "## Your medications\n"
-    "## What looks safe\n"
-    "## Watch out for\n"
-    "## See a doctor today\n"
-    "## Disclaimer\n\n"
-    "Under 'Disclaimer', include: 'This report is for information only. It is not medical advice. "
+    "Include the following sections:\n"
+    "1. '## Your medications' section listing the medications.\n"
+    "2. Only the relevant safety/risk sections depending on the severity of the risks:\n"
+    "   - If there are major risks, include the '## See a doctor today' section with details.\n"
+    "   - If there are moderate risks, include the '## Watch out for' section with details.\n"
+    "   - If there are no risks at all, include the '## What looks safe' section stating that everything looks safe.\n"
+    "   Do not include any empty or 'None' sections, and do not include the 'What looks safe' section if there are moderate or major risks.\n"
+    "3. '## Disclaimer' section with the exact text: 'This report is for information only. It is not medical advice. "
     "Always confirm with your doctor or pharmacist before changing any medication.'"
 )
 
@@ -33,12 +34,12 @@ def generate_report_deterministic(risk_assessment: dict, medications: list[str])
     watch_out = "None"
     see_doctor = "None"
     why_this_matters = []
+    watch_out_lines = []
+    see_doctor_lines = []
 
     risks = risk_assessment.get("risks", [])
     if risks:
         safe_list = "No minor interactions found."
-        watch_out_lines = []
-        see_doctor_lines = []
         
         for r in risks:
             drug_a = r['drug_a'].capitalize()
@@ -74,15 +75,18 @@ def generate_report_deterministic(risk_assessment: dict, medications: list[str])
         if see_doctor_lines:
             see_doctor = "\n".join(see_doctor_lines)
 
-    lines.append("## What looks safe")
-    lines.append(safe_list)
-    lines.append("")
-    lines.append("## Watch out for")
-    lines.append(watch_out)
-    lines.append("")
-    lines.append("## See a doctor today")
-    lines.append(see_doctor)
-    lines.append("")
+    if see_doctor_lines:
+        lines.append("## See a doctor today")
+        lines.append(see_doctor)
+        lines.append("")
+    if watch_out_lines:
+        lines.append("## Watch out for")
+        lines.append(watch_out)
+        lines.append("")
+    if not see_doctor_lines and not watch_out_lines:
+        lines.append("## What looks safe")
+        lines.append("Everything looks safe.")
+        lines.append("")
     
     if why_this_matters:
         lines.append("## Why this matters")

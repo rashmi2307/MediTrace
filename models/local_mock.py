@@ -58,7 +58,7 @@ class LocalMockModel(BaseLlm):
                 "overall_pass": True
             })
         elif "report" in prompt.lower() or "markdown" in prompt.lower() or "orchestrator" in prompt.lower():
-            response_text = f"## Your medications\n- {drug_1}\n- {drug_2}\n\n## What looks safe\n- Everything\n\n## Watch out for\n- None\n\n## See a doctor today\n- None\n\n## Disclaimer\nThis report is for information only. It is not medical advice. Always confirm with your doctor or pharmacist before changing any medication."
+            response_text = f"## Your medications\n- {drug_1}\n- {drug_2}\n\n## What looks safe\nEverything looks safe.\n\n## Disclaimer\nThis report is for information only. It is not medical advice. Always confirm with your doctor or pharmacist before changing any medication."
         elif "extract" in prompt.lower() or ("json" in prompt.lower() and "dosage" in prompt.lower()):
             response_text = json.dumps({
                 "drugs": [
