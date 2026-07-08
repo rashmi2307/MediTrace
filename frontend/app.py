@@ -2,6 +2,8 @@ import sys
 import asyncio
 from pathlib import Path
 import uuid
+import json
+from datetime import datetime, timedelta
 
 import streamlit as st
 
@@ -12,6 +14,78 @@ from agents.orchestrator import run_meditrace
 from memory.patient_memory import memory_service
 
 USER_ID = "demo_user"
+
+# -----------------------------
+# Markdown / Card Parser Functions
+# -----------------------------
+def clean_html(html_str: str) -> str:
+    return "\n".join([line.strip() for line in html_str.split("\n")])
+
+def parse_markdown_report(report_text: str):
+    sections = {}
+    current_section = None
+    current_lines = []
+    
+    for line in report_text.split('\n'):
+        stripped = line.strip()
+        if stripped.startswith('## '):
+            if current_section:
+                sections[current_section] = '\n'.join(current_lines).strip()
+            current_section = stripped[3:].strip()
+            current_lines = []
+        else:
+            current_lines.append(line)
+            
+    if current_section:
+        sections[current_section] = '\n'.join(current_lines).strip()
+        
+    return sections
+
+def parse_interaction_cards(section_text: str):
+    if not section_text or section_text.strip() == "None":
+        return []
+        
+    cards = []
+    current_card = None
+    lines = section_text.split('\n')
+    
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('### '):
+            if current_card:
+                cards.append(current_card)
+            current_card = {
+                "pair": stripped[4:].strip(),
+                "severity": "",
+                "source": "",
+                "explanation": "",
+                "reactions": [],
+                "recommendation": ""
+            }
+        elif current_card:
+            if stripped.startswith("**Severity:**"):
+                current_card["severity"] = stripped.replace("**Severity:**", "").strip()
+            elif stripped.startswith("**Source:**"):
+                current_card["source"] = stripped.replace("**Source:**", "").strip()
+            elif stripped.startswith("**Explanation:**"):
+                current_card["explanation"] = stripped.replace("**Explanation:**", "").strip()
+            elif stripped.startswith("- ") and not stripped.startswith("**"):
+                current_card["reactions"].append(stripped[2:].strip())
+            elif stripped.startswith("**Recommended Action:**"):
+                current_card["recommendation"] = stripped.replace("**Recommended Action:**", "").strip()
+                
+    if current_card:
+        cards.append(current_card)
+        
+    return cards
+
+def parse_medications(meds_text: str):
+    meds = []
+    for line in meds_text.split('\n'):
+        stripped = line.strip()
+        if stripped.startswith('- '):
+            meds.append(stripped[2:].strip())
+    return meds
 
 # -----------------------------
 # Page Configuration
@@ -141,40 +215,66 @@ st.markdown(
 )
 
 # -----------------------------
-# Sidebar: Patient Profile
+# Medication Timeline Logic
 # -----------------------------
-st.sidebar.title("Patient Profile")
+HISTORY_FILE = ROOT / "memory" / "history.json"
 
-try:
-    history = memory_service.get_medication_history(USER_ID)
-except Exception:
-    history = []
+def get_timeline():
+    if not HISTORY_FILE.exists():
+        return []
+    try:
+        with open(HISTORY_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return []
 
-profile_html = "<div class='patient-profile-card'>"
-if history:
-    profile_html += "<strong>Past Medications:</strong><ul style='margin: 8px 0 0 20px; padding:0;'>"
-    for med in history:
-        profile_html += f"<li>{med.capitalize()}</li>"
-    profile_html += "</ul>"
+def add_timeline_entry(meds_str, risk_level, num_interactions):
+    history = get_timeline()
+    entry = {
+        "timestamp": datetime.now().isoformat(),
+        "medications": meds_str,
+        "risk_level": risk_level,
+        "interactions": num_interactions
+    }
+    history.insert(0, entry)
+    history = history[:10] # Max 10 recent
+    
+    HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(HISTORY_FILE, "w") as f:
+        json.dump(history, f, indent=2)
+
+def format_date(iso_str):
+    try:
+        dt = datetime.fromisoformat(iso_str)
+        today = datetime.now().date()
+        dt_date = dt.date()
+        if dt_date == today:
+            return "Today"
+        elif dt_date == today - timedelta(days=1):
+            return "Yesterday"
+        else:
+            return dt_date.strftime("%b %d, %Y")
+    except:
+        return "Unknown Date"
+
+st.sidebar.title("Medication Timeline")
+
+timeline = get_timeline()
+if not timeline:
+    st.sidebar.info("No previous analyses.")
 else:
-    profile_html += "No medication history found."
-profile_html += "</div>"
-
-st.sidebar.markdown(profile_html, unsafe_allow_html=True)
-
-st.sidebar.markdown(
-    """
-    <div class='patient-profile-card'>
-        <strong>Known Allergies:</strong><br/>
-        <span style='color: grey;'>None documented</span>
-    </div>
-    <div class='patient-profile-card'>
-        <strong>Conditions:</strong><br/>
-        <span style='color: grey;'>None documented</span>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+    for entry in timeline:
+        date_str = format_date(entry["timestamp"])
+        st.sidebar.markdown(f"""
+        <div style="background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+            <div style="font-size: 0.8em; opacity: 0.7; margin-bottom: 4px;">{date_str}</div>
+            <div style="font-weight: 600; font-size: 0.95em; margin-bottom: 8px; line-height: 1.4;">{entry['medications']}</div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85em; align-items: center;">
+                <span>{entry['risk_level']}</span>
+                <span style="opacity: 0.7;">{entry['interactions']} interaction{'s' if entry['interactions'] != 1 else ''}</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 # -----------------------------
 # Theme Selection Overrides
@@ -208,7 +308,7 @@ if theme_choice == "Dark Mode":
         }
         /* Typography - explicitly force text color against Streamlit's native Light Mode inheritance */
         .stMarkdown p, .stMarkdown li, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6, 
-        label, .stText, .stSidebar p, .stSidebar h1, .stSidebar h2, .stSidebar h3, .stSidebar h4, .stSidebar h5, .stSidebar h6, .stSidebar li, .stSidebar strong {
+        label, .stText, .stSidebar p, .stSidebar h1, .stSidebar h2, .stSidebar h3, .stSidebar h4, .stSidebar h5, .stSidebar h6, .stSidebar li, .stSidebar strong, .stSidebar div, .stSidebar span {
             color: #FAFAFA !important;
         }
         /* Buttons */
@@ -270,7 +370,7 @@ elif theme_choice == "Light Mode":
         }
         /* Typography - explicitly force text color against Streamlit's native Dark Mode inheritance */
         .stMarkdown p, .stMarkdown li, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6, 
-        label, .stText, .stSidebar p, .stSidebar h1, .stSidebar h2, .stSidebar h3, .stSidebar h4, .stSidebar h5, .stSidebar h6, .stSidebar li, .stSidebar strong {
+        label, .stText, .stSidebar p, .stSidebar h1, .stSidebar h2, .stSidebar h3, .stSidebar h4, .stSidebar h5, .stSidebar h6, .stSidebar li, .stSidebar strong, .stSidebar div, .stSidebar span {
             color: #31333F !important;
         }
         /* Buttons */
@@ -410,78 +510,32 @@ if analyze_clicked:
             st.error("Something went wrong while generating the report.")
             st.exception(e)
 
-
-# -----------------------------
-# Markdown / Card Parser Functions
-# -----------------------------
-def clean_html(html_str: str) -> str:
-    return "\n".join([line.strip() for line in html_str.split("\n")])
-
-def parse_markdown_report(report_text: str):
-    sections = {}
-    current_section = None
-    current_lines = []
-    
-    for line in report_text.split('\n'):
-        stripped = line.strip()
-        if stripped.startswith('## '):
-            if current_section:
-                sections[current_section] = '\n'.join(current_lines).strip()
-            current_section = stripped[3:].strip()
-            current_lines = []
-        else:
-            current_lines.append(line)
-            
-    if current_section:
-        sections[current_section] = '\n'.join(current_lines).strip()
-        
-    return sections
-
-def parse_interaction_cards(section_text: str):
-    if not section_text or section_text.strip() == "None":
-        return []
-        
-    cards = []
-    current_card = None
-    lines = section_text.split('\n')
-    
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith('### '):
-            if current_card:
-                cards.append(current_card)
-            current_card = {
-                "pair": stripped[4:].strip(),
-                "severity": "",
-                "source": "",
-                "explanation": "",
-                "reactions": [],
-                "recommendation": ""
-            }
-        elif current_card:
-            if stripped.startswith("**Severity:**"):
-                current_card["severity"] = stripped.replace("**Severity:**", "").strip()
-            elif stripped.startswith("**Source:**"):
-                current_card["source"] = stripped.replace("**Source:**", "").strip()
-            elif stripped.startswith("**Explanation:**"):
-                current_card["explanation"] = stripped.replace("**Explanation:**", "").strip()
-            elif stripped.startswith("- ") and not stripped.startswith("**"):
-                current_card["reactions"].append(stripped[2:].strip())
-            elif stripped.startswith("**Recommended Action:**"):
-                current_card["recommendation"] = stripped.replace("**Recommended Action:**", "").strip()
+        # Process and save to timeline if successful
+        if st.session_state.get("last_report"):
+            report = st.session_state["last_report"]
+            if not ("I could not detect at least two valid medications" in report or "Input rejected" in report):
+                sections = parse_markdown_report(report)
                 
-    if current_card:
-        cards.append(current_card)
-        
-    return cards
+                major_cards = parse_interaction_cards(sections.get("See a doctor today", ""))
+                mod_cards = parse_interaction_cards(sections.get("Watch out for", ""))
+                
+                num_interactions = len(major_cards) + len(mod_cards)
+                
+                if major_cards:
+                    risk_level = "🔴 Major"
+                elif mod_cards:
+                    risk_level = "🟡 Moderate"
+                else:
+                    risk_level = "🟢 Safe"
+                    
+                meds_checked = user_query
+                if "Your medications" in sections:
+                    parsed_meds = parse_medications(sections["Your medications"])
+                    if parsed_meds:
+                        meds_checked = " + ".join(parsed_meds)
+                
+                add_timeline_entry(meds_checked, risk_level, num_interactions)
 
-def parse_medications(meds_text: str):
-    meds = []
-    for line in meds_text.split('\n'):
-        stripped = line.strip()
-        if stripped.startswith('- '):
-            meds.append(stripped[2:].strip())
-    return meds
 
 def render_interaction_card(card: dict, severity_level: str):
     if severity_level == "major":
