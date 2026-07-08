@@ -1,0 +1,1 @@
+{"timestamp": "2026-07-08T23:44:45.482524Z", "medications_entered": "I take ibuprofen and metformin", "extracted_medications": ["ibuprofen", "metformin"], "interaction_count": 1, "overall_severity": "major", "execution_time": 9.675, "api_failures": 0, "report_status": "success"}
