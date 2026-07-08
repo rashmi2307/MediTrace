@@ -3,6 +3,7 @@ import json
 from google.adk.agents import LlmAgent
 from pydantic import BaseModel, Field
 from models.local_mock import LocalMockModel
+import config
 
 class EvaluatorResult(BaseModel):
     is_valid: bool = Field(description="True if the report meets all guidelines, False otherwise.")
@@ -20,7 +21,7 @@ EVALUATOR_PROMPT = (
 
 evaluator_agent = LlmAgent(
     name="evaluator",
-    model=LocalMockModel() if not os.environ.get("USE_REAL_LLM") else "gemini-2.0-flash",
+    model=LocalMockModel() if not config.USE_REAL_LLM else "gemini-2.0-flash",
     instruction=EVALUATOR_PROMPT,
     output_schema=EvaluatorResult,
     description="Evaluates the generated report for safety, structure, and disclaimers."
@@ -39,14 +40,11 @@ class LLMEvaluator:
         from google.adk.runners import Runner
         from google.adk.sessions import InMemorySessionService
         from google.genai import types
-
-        import os
-        use_real_llm = os.environ.get("USE_REAL_LLM")
         
         feedback = ""
         last_report = ""
 
-        if not use_real_llm:
+        if not config.USE_REAL_LLM:
             # Deterministic report is always valid because we crafted it perfectly.
             last_report = await generate_func("")
             return last_report

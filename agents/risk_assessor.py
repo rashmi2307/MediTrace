@@ -2,6 +2,7 @@ import os
 from google.adk.agents import LlmAgent
 from pydantic import BaseModel, Field
 from models.local_mock import LocalMockModel
+import config
 
 class RiskAssessmentEntry(BaseModel):
     drug_a: str
@@ -25,7 +26,7 @@ RISK_ASSESSOR_PROMPT = (
 
 risk_assessor_agent = LlmAgent(
     name="risk_assessor",
-    model=LocalMockModel() if not os.environ.get("USE_REAL_LLM") else "gemini-2.0-flash",
+    model=LocalMockModel() if not config.USE_REAL_LLM else "gemini-2.0-flash",
     instruction=RISK_ASSESSOR_PROMPT,
     output_schema=RiskAssessmentList,
     description="Assesses clinical risks based on drug interactions, scoring 1-4, filtering out minor risks."

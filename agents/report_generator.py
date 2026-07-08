@@ -1,6 +1,7 @@
 import os
 from google.adk.agents import LlmAgent
 from models.local_mock import LocalMockModel
+import config
 
 REPORT_GENERATOR_PROMPT = (
     "You are a medical report generator. Given a list of medications and a clinical risk assessment, "
@@ -18,7 +19,7 @@ REPORT_GENERATOR_PROMPT = (
 
 report_generator_agent = LlmAgent(
     name="report_generator",
-    model=LocalMockModel() if not os.environ.get("USE_REAL_LLM") else "gemini-2.0-flash",
+    model=LocalMockModel() if not config.USE_REAL_LLM else "gemini-2.0-flash",
     instruction=REPORT_GENERATOR_PROMPT,
     description="Generates a structured markdown safety report based on medications and risk assessment."
 )

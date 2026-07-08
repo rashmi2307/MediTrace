@@ -35,6 +35,7 @@ _session_service = InMemorySessionService()
 async def run_meditrace(user_input: str, user_id: str, session_id: str) -> str:
     import time
     from utils.logger import log_analysis
+    import config
     
     start_time = time.time()
     log_extracted = []
@@ -46,16 +47,16 @@ async def run_meditrace(user_input: str, user_id: str, session_id: str) -> str:
     from guardrails.input_guard import check_input
     from guardrails.output_guard import evaluator
     from memory.patient_memory import memory_service
-    import os
     
     # 1. Input Guardrail
-    input_check = await check_input(user_input)
-    if not input_check.get("is_safe", False):
-        log_analysis(user_input, [], 0, "unknown", time.time() - start_time, 0, "rejected")
-        return f"Input rejected: {input_check.get('reason', 'Unsafe input detected.')}"
+    if config.ENABLE_GUARDRAILS:
+        input_check = await check_input(user_input)
+        if not input_check.get("is_safe", False):
+            log_analysis(user_input, [], 0, "unknown", time.time() - start_time, 0, "rejected")
+            return f"Input rejected: {input_check.get('reason', 'Unsafe input detected.')}"
         
     # Determine if we are running deterministically
-    use_real_llm = os.environ.get("USE_REAL_LLM")
+    use_real_llm = config.USE_REAL_LLM
     
     # 2. Generator Function for Evaluator
     async def generate_report_draft(feedback: str) -> str:
@@ -111,7 +112,8 @@ async def run_meditrace(user_input: str, user_id: str, session_id: str) -> str:
             print("----------------------------")
             
             # Save to memory immediately since we have the true list
-            memory_service.store_medications(user_id, extracted_drugs)
+            if config.ENABLE_MEMORY:
+                memory_service.store_medications(user_id, extracted_drugs)
             
             return final_report_before_evaluator
             
@@ -142,15 +144,19 @@ async def run_meditrace(user_input: str, user_id: str, session_id: str) -> str:
         
     # 3. Output Guardrail (Evaluate and Retry)
     try:
-        final_report = await evaluator.evaluate_and_retry(generate_report_draft)
-        print("evaluator_result passes and returned final report.")
+        if config.ENABLE_EVALUATOR:
+            final_report = await evaluator.evaluate_and_retry(generate_report_draft)
+            print("evaluator_result passes and returned final report.")
+        else:
+            final_report = await generate_report_draft(None)
+            print("evaluator skipped, returned final report.")
         report_status = "success"
     except Exception as e:
         report_status = "failed"
         raise
     finally:
         # 4. Save to memory if we didn't already
-        if use_real_llm:
+        if use_real_llm and config.ENABLE_MEMORY:
             import re
             extracted = [w.strip().capitalize() for w in re.split(r'[, ]+', user_input) if len(w) > 4 and w.lower() not in {"this", "that"}]
             if not extracted:

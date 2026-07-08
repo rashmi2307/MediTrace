@@ -6,6 +6,7 @@ from tools.rxnav_mcp import get_interaction_pair
 from tools.openfda_mcp import search_adverse_events
 from tools.search_mcp import web_search_tool
 from models.local_mock import LocalMockModel
+import config
 
 class InteractionResult(BaseModel):
     drug_a: str
@@ -29,7 +30,7 @@ INTERACTION_CHECKER_PROMPT = (
 
 interaction_checker_agent = LlmAgent(
     name="interaction_checker",
-    model=LocalMockModel() if not os.environ.get("USE_REAL_LLM") else "gemini-2.0-flash",
+    model=LocalMockModel() if not config.USE_REAL_LLM else "gemini-2.0-flash",
     instruction=INTERACTION_CHECKER_PROMPT,
     output_schema=InteractionList,
     tools=[get_interaction_pair, search_adverse_events, web_search_tool],

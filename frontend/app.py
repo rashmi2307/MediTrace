@@ -20,11 +20,13 @@ USER_ID = "demo_user"
 # -----------------------------
 from frontend.parsers import clean_html, parse_markdown_report, parse_interaction_cards, parse_medications
 
+import config
+
 # -----------------------------
 # Page Configuration
 # -----------------------------
 st.set_page_config(
-    page_title="MediTrace — Medication Safety Checker",
+    page_title=config.APP_TITLE,
     page_icon="💊",
     layout="wide",
 )
@@ -414,29 +416,31 @@ with col_actions:
         report_data = st.session_state.get("last_report", "")
         pdf_bytes = st.session_state.get("last_pdf_bytes", None)
         
-        if report_data:
-            if not pdf_bytes:
-                from frontend.pdf_generator import generate_clinical_pdf
-                try:
-                    pdf_bytes = generate_clinical_pdf(report_data)
-                    st.session_state["last_pdf_bytes"] = pdf_bytes
-                except Exception as e:
-                    st.error(f"Failed to generate PDF: {e}")
-            
-            if pdf_bytes:
-                filename = f"meditrace_report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
-                st.download_button("⬇️ PDF Report", data=pdf_bytes, file_name=filename, mime="application/pdf", use_container_width=True)
+        if config.ENABLE_PDF_EXPORT:
+            if report_data:
+                if not pdf_bytes:
+                    from frontend.pdf_generator import generate_clinical_pdf
+                    try:
+                        pdf_bytes = generate_clinical_pdf(report_data)
+                        st.session_state["last_pdf_bytes"] = pdf_bytes
+                    except Exception as e:
+                        st.error(f"Failed to generate PDF: {e}")
+                
+                if pdf_bytes:
+                    filename = f"meditrace_report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+                    st.download_button("⬇️ PDF Report", data=pdf_bytes, file_name=filename, mime="application/pdf", use_container_width=True)
+                else:
+                    st.button("⬇️ PDF Report", disabled=True, use_container_width=True)
             else:
                 st.button("⬇️ PDF Report", disabled=True, use_container_width=True)
-        else:
-            st.button("⬇️ PDF Report", disabled=True, use_container_width=True)
     
     with sub_col2:
-        if report_data:
-            md_filename = f"meditrace_report_{datetime.now().strftime('%Y%m%d_%H%M')}.md"
-            st.download_button("⬇️ Markdown", data=report_data, file_name=md_filename, mime="text/markdown", use_container_width=True)
-        else:
-            st.button("⬇️ Markdown", disabled=True, use_container_width=True)
+        if config.ENABLE_MARKDOWN_EXPORT:
+            if report_data:
+                md_filename = f"meditrace_report_{datetime.now().strftime('%Y%m%d_%H%M')}.md"
+                st.download_button("⬇️ Markdown", data=report_data, file_name=md_filename, mime="text/markdown", use_container_width=True)
+            else:
+                st.button("⬇️ Markdown", disabled=True, use_container_width=True)
             
     with sub_col3:
         rerun_clicked = st.button("🔄 Rerun App", use_container_width=True)

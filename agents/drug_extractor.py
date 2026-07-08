@@ -2,6 +2,7 @@ import os
 from google.adk.agents import LlmAgent
 from pydantic import BaseModel, Field
 from models.local_mock import LocalMockModel
+import config
 
 class DrugEntry(BaseModel):
     name: str = Field(description="Generic name of the drug, in lowercase. If unknown, use the brand name.")
@@ -20,7 +21,7 @@ DRUG_EXTRACTOR_PROMPT = (
 
 drug_extractor_agent = LlmAgent(
     name="drug_extractor",
-    model=LocalMockModel() if not os.environ.get("USE_REAL_LLM") else "gemini-2.0-flash",
+    model=LocalMockModel() if not config.USE_REAL_LLM else "gemini-2.0-flash",
     instruction=DRUG_EXTRACTOR_PROMPT,
     output_schema=DrugList,
     description="Extracts a structured list of drugs, dosages, and frequencies from raw text."
