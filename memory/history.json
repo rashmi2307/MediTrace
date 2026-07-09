@@ -1,5 +1,23 @@
 [
   {
+    "timestamp": "2026-07-09T18:43:45.205077",
+    "medications": "Aspirin + Warfarin",
+    "risk_level": "\ud83d\udd34 Major",
+    "interactions": 1
+  },
+  {
+    "timestamp": "2026-07-09T18:43:06.736228",
+    "medications": "Cetirizine + Patisiran",
+    "risk_level": "\ud83d\udfe1 Moderate",
+    "interactions": 1
+  },
+  {
+    "timestamp": "2026-07-09T18:42:26.635618",
+    "medications": "Metformin + Lumasiran",
+    "risk_level": "\ud83d\udfe2 Safe",
+    "interactions": 0
+  },
+  {
     "timestamp": "2026-07-09T17:43:20.999652",
     "medications": "Paracetamol + Cetirizine",
     "risk_level": "\ud83d\udfe1 Moderate",
@@ -39,24 +57,6 @@
     "timestamp": "2026-07-09T17:29:37.277217",
     "medications": "Cetirizine + Patisiran",
     "risk_level": "\ud83d\udfe1 Moderate",
-    "interactions": 1
-  },
-  {
-    "timestamp": "2026-07-09T17:28:30.006700",
-    "medications": "Paracetamol + Cetirizine",
-    "risk_level": "\ud83d\udfe1 Moderate",
-    "interactions": 1
-  },
-  {
-    "timestamp": "2026-07-09T17:18:57.207777",
-    "medications": "Metformin + Lumasiran",
-    "risk_level": "\ud83d\udfe2 Safe",
-    "interactions": 0
-  },
-  {
-    "timestamp": "2026-07-09T05:06:06.883864",
-    "medications": "Metformin + Ibuprofen",
-    "risk_level": "\ud83d\udd34 Major",
     "interactions": 1
   }
 ]

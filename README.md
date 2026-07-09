@@ -1,7 +1,7 @@
 # 🏥 MediTrace: AI-Powered Medication Safety Assistant
 
 <div align="center">
-  <p><strong>Protecting Patients with Intelligent, Multi-Agent Medication Risk Analysis.</strong></p>
+  <p><strong>Multi-Agent Medication Risk Analysis System.</strong></p>
   
   ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
   ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
@@ -14,47 +14,45 @@
 ---
 
 ## 📖 Project Overview
-MediTrace is an AI-powered medication safety assistant designed to help users identify potential drug interactions and adverse event risks. The system coordinates multiple specialized AI agents using the **Google Agent Development Kit (ADK)** to parse fuzzy prescription entries, query public clinical databases (**RxNav** and **OpenFDA**), assess patient risk levels, and present structured safety reports. It is built to run entirely locally without requiring paid API services, featuring a deterministic pipeline fallback for reliable offline checks.
+MediTrace is a medication safety assistant that identifies potential drug interactions and adverse event risks. Built with the Google Agent Development Kit (ADK), it coordinates a multi-agent architecture to query clinical databases including RxNav and OpenFDA. The system parses natural language medication entries, evaluates interaction severity, and generates structured clinical safety reports. It supports a local deterministic fallback pipeline, ensuring reliable execution without external API dependencies.
+
+![MediTrace Dashboard](Docs/Dashboard.png)
 
 ---
 
 ## ✨ Key Features
-- **Multi-Agent Pipeline**: Coordinates dedicated AI sub-agents to handle extraction, interaction verification, risk assessment, and clinical report writing.
-- **Medication Extraction**: Employs advanced LLM parsing and fallback logic to extract clean drug lists from informal or conversational inputs.
-- **RxNav Interaction Checking**: Integrates RxNav API to fetch RxNorm IDs and verify known drug-drug contraindications.
-- **OpenFDA Adverse Event Analysis**: Dynamically queries the FDA Adverse Event Reporting System to identify statistically significant side effects.
-- **Clinical Risk Classification**: Categorizes combinations into clear, actionable risk tiers: **Safe**, **Moderate Risk**, or **Major Risk**.
-- **Professional Report Generation**: Produces formatted markdown summaries complete with doctor-style clinical syntheses and recommendations.
-- **Medication Timeline**: Provides a sidebar dashboard showing patient history and past medication combinations analyzed during the session.
-- **PDF Export**: Generates beautifully styled, publication-ready clinical PDF reports with professional typography and page layouts.
-- **Markdown Export**: Offers direct downloads of the raw clinical analysis in Markdown format.
-- **Light/Dark Themes**: Features a premium responsive web design with real-time system, light, and dark mode styling.
-- **Logging**: Automatically saves execution data (timestamps, severities, token costs/durations) to local JSONL telemetry logs.
-- **Guardrails**: Intercepts input strings to reject harmful queries (Input Guard) and validates output content for required safety disclaimers (Output Guard).
+- **Multi-Agent Pipeline** – Coordinates specialized agents for data extraction, interaction verification, risk assessment, and report generation.
+- **Medication Extraction** – Extracts medication names from natural language using an AI agent with deterministic fallback.
+- **RxNav Integration** – Queries the RxNav API to fetch RxNorm IDs and verify known drug interactions.
+- **OpenFDA Analysis** – Queries the FDA Adverse Event Reporting System to identify reported side effects.
+- **Risk Classification** – Categorizes drug combinations into Safe, Moderate Risk, or Major Risk tiers.
+- **Professional Reports** – Generates structured medication safety reports in Markdown and PDF formats.
+- **Medication Timeline** – Tracks patient history and past medication analyses in a sidebar dashboard.
+- **Theme Support** – Provides responsive system, light, and dark UI modes.
+- **Telemetry Logging** – Records execution data including timestamps, severity levels, and token usage.
+- **Input/Output Guardrails** – Filters harmful queries and ensures generated reports contain required safety disclaimers.
 
 ---
 
 ## 🎨 UI Features
-- **Professional Dashboard**: A clean, intuitive grid showcasing vital medication counts, checked pairs, risk assessment status, and a modern medical summary card.
-- **Medication Timeline**: Sidebar history component that tracks active prescriptions and allows reloading of prior runs.
-- **Risk Badges**: Color-coded, highly visible UI badges classifying general hazard levels (Safe: Green, Moderate: Orange, Major: Red).
-- **Color-Coded Severity Cards**: Bordered cards highlighting specific drug pairs, adverse events, confidence scores, and actions.
-- **Download PDF**: Instant export button to download print-friendly, clinical PDF documents.
-- **Download Markdown**: Direct-to-file download option to save reports as markdown notes.
-- **Theme Switcher**: Seamless toggles to accommodate light, dark, and system color schemes.
-- **Responsive Layout**: Designed to adapt dynamically from mobile devices up to large desktop screens.
+- ✅ **Professional Dashboard** – Displays medications, interactions, and overall risk.
+- ✅ **Medication Timeline** – Tracks active prescriptions and prior analysis sessions.
+- ✅ **Risk Badges** – Indicates general hazard levels using color-coded UI badges.
+- ✅ **Severity Cards** – Highlights specific drug pairs, adverse events, and recommended actions.
+- ✅ **Report Downloads** – Exports generated safety reports as PDF or Markdown files.
+- ✅ **Responsive Layout** – Adapts UI dynamically for desktop and mobile devices.
+- ✅ **Theme Switcher** – Supports system, light, and dark color schemes.
 
 ---
 
-## 🧠 AI Engineering Highlights
-MediTrace exhibits best-in-class agentic AI engineering patterns:
-- **Google ADK Orchestration**: Uses the ADK runner for session coordination and structured tool calling.
-- **Specialized Agents**: Individual agents are given narrow prompts, reducing latency and maximizing output accuracy.
-- **Deterministic Report Generation**: Uses robust template fallback mechanisms when running without real LLMs to allow local testing.
-- **Clinical Evidence Aggregation**: Implements structured MCP (Model Context Protocol) tool calling to fetch peer-reviewed NIH RxNav and OpenFDA data.
-- **Guardrails**: Modular `input_guard.py` and `output_guard.py` protect against prompt injection and enforce safety standards.
-- **Modular Architecture**: Complete separation of concerns between tools, agents, UI views, and utility loggers.
-- **Configuration Management**: Centralized variables managed securely via `config.py` and environment-based `.env` variables.
+## 🧠 Engineering Highlights
+- **Multi-Agent Architecture**: Coordinates sequential execution of specialized agents.
+- **Google ADK**: Uses the Agent Development Kit for session management and tool calling.
+- **Deterministic Fallback**: Provides local text-parsing templates when running without LLMs.
+- **API Integrations**: Uses MCP tools to fetch structured data from RxNav and OpenFDA.
+- **Guardrails**: Intercepts inputs and evaluates outputs to enforce content constraints.
+- **Modular Design**: Separates concerns between agents, APIs, UI components, and logging utilities.
+- **Configuration Management**: Manages feature flags and environment variables centrally via `config.py`.
 
 ---
 
@@ -65,15 +63,14 @@ MediTrace exhibits best-in-class agentic AI engineering patterns:
 ---
 
 ## 🔄 Sample Workflow
-The safety assessment workflow progresses through the following steps:
-1. **User enters medications**: The user types a list of medications (e.g., "Metformin, Ibuprofen") into the Streamlit app.
-2. **Drug extractor parses input**: The extractor agent identifies valid ingredients and filters out irrelevant text.
-3. **Interaction checker queries RxNav**: The checker queries the RxNav endpoint to map drugs to active ingredient concept IDs (RxCUI) and look up contraindications.
-4. **OpenFDA retrieves adverse events**: The checker queries the OpenFDA endpoint for reported adverse events and reaction statistics.
-5. **Risk assessor scores interactions**: The assessor parses the combined data, determining safety classifications and confidence intervals.
-6. **Report generator creates report**: The generator creates a physician-style medical safety report.
-7. **UI displays report**: The Streamlit interface displays color-coded cards and executive dashboard summaries.
-8. **Timeline stores analysis**: The medication history is saved to the session timeline for subsequent reviews.
+1. **User enters medications**: The user types a list of medications into the Streamlit app.
+2. **Drug extractor parses input**: The extractor identifies valid active ingredients.
+3. **Interaction checker queries RxNav**: The checker maps drugs to RxCUI concept IDs and retrieves contraindications.
+4. **OpenFDA retrieves adverse events**: The checker queries OpenFDA for reported adverse events.
+5. **Risk assessor scores interactions**: The assessor parses the data to determine safety classifications.
+6. **Report generator creates report**: The generator formats the safety assessment into a structured document.
+7. **UI displays report**: The interface renders the report using severity cards.
+8. **Timeline stores analysis**: The session history is saved for subsequent reviews.
 
 ---
 
@@ -152,16 +149,17 @@ python main.py
 ---
 
 ## 🧪 Example Outputs
-*Note: Real screenshots of the application UI will be added in future updates.*
+
+**[📄 View a Sample Generated Clinical PDF Report](Docs/meditrace_report_20260709_1648.pdf)**
 
 ### Major Risk
-*Screenshot placeholder illustrating a severe interaction card (e.g., Metformin + Ibuprofen causing potential kidney complications) with high severity alerts and recommendations.*
+![Major Risk Analysis](Docs/Major%20Risk.png)
 
 ### Moderate Risk
-*Screenshot placeholder showing a moderate warning badge, adverse event frequencies, and standard medical counseling advice.*
+![Moderate Risk Analysis](Docs/Moderate%20Risk.png)
 
 ### Safe Analysis
-*Screenshot placeholder depicting a clean green assessment indicating no known adverse interactions found.*
+![Safe Analysis](Docs/Safe.png)
 
 ---
 
