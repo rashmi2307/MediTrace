@@ -16,7 +16,7 @@
 ## 📖 Project Overview
 MediTrace is a medication safety assistant that identifies potential drug interactions and adverse event risks. Built with the Google Agent Development Kit (ADK), it coordinates a multi-agent architecture to query clinical databases including RxNav and OpenFDA. The system parses natural language medication entries, evaluates interaction severity, and generates structured clinical safety reports. It supports a local deterministic fallback pipeline, ensuring reliable execution without external API dependencies.
 
-![MediTrace Dashboard](Docs/Dashboard.png)
+![MediTrace Dashboard](assets/Dashboard.png)
 
 ---
 
@@ -58,7 +58,7 @@ MediTrace is a medication safety assistant that identifies potential drug intera
 
 ## 🏗️ Architecture Diagram
 
-![MediTrace Architecture](Docs/architecture.svg)
+![MediTrace Architecture](assets/architecture.svg)
 
 ---
 
@@ -150,16 +150,16 @@ python main.py
 
 ## 🧪 Example Outputs
 
-**[📄 View a Sample Generated Clinical PDF Report](Docs/meditrace_report_20260709_1648.pdf)**
+**[📄 View a Sample Generated Clinical PDF Report](assets/meditrace_report_20260709_1648.pdf)**
 
 ### Major Risk
-![Major Risk Analysis](Docs/Major%20Risk.png)
+![Major Risk Analysis](assets/Major%20Risk.png)
 
 ### Moderate Risk
-![Moderate Risk Analysis](Docs/Moderate%20Risk.png)
+![Moderate Risk Analysis](assets/Moderate%20Risk.png)
 
 ### Safe Analysis
-![Safe Analysis](Docs/Safe.png)
+![Safe Analysis](assets/Safe.png)
 
 ---
 
