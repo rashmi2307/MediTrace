@@ -493,7 +493,7 @@ if analyze_clicked:
         # Process and save to timeline if successful
         if st.session_state.get("last_report"):
             report = st.session_state["last_report"]
-            if not ("I could not detect at least two valid medications" in report or "Input rejected" in report):
+            if not ("I could not detect" in report or "Input rejected" in report):
                 sections = parse_markdown_report(report)
                 
                 major_cards = parse_interaction_cards(sections.get("See a doctor today", ""))

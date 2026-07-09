@@ -11,189 +11,88 @@
   ![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)
 </div>
 
-## 📖 Project Overview
-MediTrace is an advanced, AI-powered medication safety assistant designed to help users understand potential drug interactions and adverse event risks. By combining the **Google Agent Development Kit (ADK)** with deterministic fallback architectures, MediTrace orchestrates multiple AI sub-agents to extract drug information, check clinical databases, analyze risk severity, and present patient-friendly markdown safety reports.
+---
 
-Whether run via the Streamlit GUI or the blazing-fast CLI, MediTrace guarantees high-quality insights supported by real-world clinical APIs (**RxNav** and **OpenFDA**).
+## 📖 Project Overview
+MediTrace is an AI-powered medication safety assistant designed to help users identify potential drug interactions and adverse event risks. The system coordinates multiple specialized AI agents using the **Google Agent Development Kit (ADK)** to parse fuzzy prescription entries, query public clinical databases (**RxNav** and **OpenFDA**), assess patient risk levels, and present structured safety reports. It is built to run entirely locally without requiring paid API services, featuring a deterministic pipeline fallback for reliable offline checks.
 
 ---
 
 ## ✨ Key Features
-- **Intelligent Drug Extraction**: Uses LLM parsing and deterministic fallbacks to parse fuzzy user inputs into verified drug entities.
-- **Deep Interaction Detection**: Queries the NIH RxNav/DrugBank APIs to detect known contraindications and drug-drug interactions.
-- **OpenFDA Evidence Analysis**: Aggregates real-world adverse event reports to detect high-frequency side effects (e.g., Acute Kidney Injury, Haemorrhage).
-- **Dynamic Risk Classification**: Employs evidence-based scoring logic to flag major risks ("See a doctor today") vs. moderate risks ("Watch out for").
-- **Patient Memory**: Tracks active patient prescriptions across sessions using secure session management.
-- **Robust Guardrails**: Utilizes strict Input Guards to reject unsafe prompts and Output Evaluators to ensure report quality and medical disclaimers.
-- **Local No-Billing Execution**: Includes a deterministic fallback pipeline that allows 100% free local execution without relying on Vertex AI API billing.
+- **Multi-Agent Pipeline**: Coordinates dedicated AI sub-agents to handle extraction, interaction verification, risk assessment, and clinical report writing.
+- **Medication Extraction**: Employs advanced LLM parsing and fallback logic to extract clean drug lists from informal or conversational inputs.
+- **RxNav Interaction Checking**: Integrates RxNav API to fetch RxNorm IDs and verify known drug-drug contraindications.
+- **OpenFDA Adverse Event Analysis**: Dynamically queries the FDA Adverse Event Reporting System to identify statistically significant side effects.
+- **Clinical Risk Classification**: Categorizes combinations into clear, actionable risk tiers: **Safe**, **Moderate Risk**, or **Major Risk**.
+- **Professional Report Generation**: Produces formatted markdown summaries complete with doctor-style clinical syntheses and recommendations.
+- **Medication Timeline**: Provides a sidebar dashboard showing patient history and past medication combinations analyzed during the session.
+- **PDF Export**: Generates beautifully styled, publication-ready clinical PDF reports with professional typography and page layouts.
+- **Markdown Export**: Offers direct downloads of the raw clinical analysis in Markdown format.
+- **Light/Dark Themes**: Features a premium responsive web design with real-time system, light, and dark mode styling.
+- **Logging**: Automatically saves execution data (timestamps, severities, token costs/durations) to local JSONL telemetry logs.
+- **Guardrails**: Intercepts input strings to reject harmful queries (Input Guard) and validates output content for required safety disclaimers (Output Guard).
+
+---
+
+## 🎨 UI Features
+- **Professional Dashboard**: A clean, intuitive grid showcasing vital medication counts, checked pairs, risk assessment status, and a modern medical summary card.
+- **Medication Timeline**: Sidebar history component that tracks active prescriptions and allows reloading of prior runs.
+- **Risk Badges**: Color-coded, highly visible UI badges classifying general hazard levels (Safe: Green, Moderate: Orange, Major: Red).
+- **Color-Coded Severity Cards**: Bordered cards highlighting specific drug pairs, adverse events, confidence scores, and actions.
+- **Download PDF**: Instant export button to download print-friendly, clinical PDF documents.
+- **Download Markdown**: Direct-to-file download option to save reports as markdown notes.
+- **Theme Switcher**: Seamless toggles to accommodate light, dark, and system color schemes.
+- **Responsive Layout**: Designed to adapt dynamically from mobile devices up to large desktop screens.
 
 ---
 
 ## 🧠 AI Engineering Highlights
-MediTrace is built on modern Agentic AI principles to ensure reliability and safety in medical domains:
-- **Multi-Agent Architecture**: Decouples extraction, interaction checking, risk assessment, and report generation into specialized agents.
-- **Tool Calling (MCP)**: Agents are equipped with tools to execute real HTTP requests to federal databases.
-- **Evaluators**: The `output_guard.py` features a retry-loop LLM evaluator that guarantees formatting and safety disclaimers before outputting to the user.
-- **Guardrails**: `input_guard.py` intercepts malicious injections before they hit the orchestrator.
-- **Stateful Memory**: Integrates `InMemoryMemoryService` to retain historical patient context.
+MediTrace exhibits best-in-class agentic AI engineering patterns:
+- **Google ADK Orchestration**: Uses the ADK runner for session coordination and structured tool calling.
+- **Specialized Agents**: Individual agents are given narrow prompts, reducing latency and maximizing output accuracy.
+- **Deterministic Report Generation**: Uses robust template fallback mechanisms when running without real LLMs to allow local testing.
+- **Clinical Evidence Aggregation**: Implements structured MCP (Model Context Protocol) tool calling to fetch peer-reviewed NIH RxNav and OpenFDA data.
+- **Guardrails**: Modular `input_guard.py` and `output_guard.py` protect against prompt injection and enforce safety standards.
+- **Modular Architecture**: Complete separation of concerns between tools, agents, UI views, and utility loggers.
+- **Configuration Management**: Centralized variables managed securely via `config.py` and environment-based `.env` variables.
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture Diagram
 
-```mermaid
-graph TD
-    User([👤 User]) --> UI[💻 Streamlit UI / CLI]
-    UI --> InputGuard{🛡️ Input Guardrail}
-    InputGuard -- Safe --> Orchestrator[🧠 Orchestrator Agent]
-    InputGuard -- Unsafe --> Reject[❌ Reject Request]
-    
-    Orchestrator --> Extractor[💊 Drug Extractor Agent]
-    Orchestrator --> Checker[🔄 Interaction Checker Agent]
-    Orchestrator --> Assessor[⚠️ Risk Assessor Agent]
-    Orchestrator --> Generator[📝 Report Generator Agent]
-    
-    Checker --> APIs[(RxNav + OpenFDA APIs)]
-    Assessor --> APIs
-    
-    Generator --> Evaluator{⚖️ Output Evaluator}
-    Evaluator -- Valid --> Memory[💾 Patient Memory]
-    Evaluator -- Invalid --> Generator
-    
-    Memory --> Output([📄 Final Markdown Report])
-    Output --> User
-```
+![MediTrace Architecture](Docs/architecture.svg)
 
 ---
 
-## ⚙️ Installation
-
-MediTrace is built with Python. Follow these steps to run the application locally.
-
-```bash
-# 1. Create a virtual environment
-python -m venv .venv
-
-# 2. Activate the virtual environment
-# Windows:
-.venv\Scripts\activate
-# Mac/Linux:
-source .venv/bin/activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-```
+## 🔄 Sample Workflow
+The safety assessment workflow progresses through the following steps:
+1. **User enters medications**: The user types a list of medications (e.g., "Metformin, Ibuprofen") into the Streamlit app.
+2. **Drug extractor parses input**: The extractor agent identifies valid ingredients and filters out irrelevant text.
+3. **Interaction checker queries RxNav**: The checker queries the RxNav endpoint to map drugs to active ingredient concept IDs (RxCUI) and look up contraindications.
+4. **OpenFDA retrieves adverse events**: The checker queries the OpenFDA endpoint for reported adverse events and reaction statistics.
+5. **Risk assessor scores interactions**: The assessor parses the combined data, determining safety classifications and confidence intervals.
+6. **Report generator creates report**: The generator creates a physician-style medical safety report.
+7. **UI displays report**: The Streamlit interface displays color-coded cards and executive dashboard summaries.
+8. **Timeline stores analysis**: The medication history is saved to the session timeline for subsequent reviews.
 
 ---
 
-## 🚀 Usage
-
-### Option 1: Command Line Interface (CLI)
-Run the application directly in your terminal for rapid interaction checks:
-```bash
-python main.py
+## 📂 Project Structure
 ```
-
-### Option 2: Streamlit Web UI
-Launch the interactive web interface:
-```bash
-streamlit run frontend/app.py
+MediTrace/
+├── agents/             # Multi-agent definitions (Extractor, Checker, Assessor, etc.)
+├── frontend/           # Streamlit application UI files and style assets
+├── guardrails/         # Input guard and output evaluator modules
+├── logs/               # Telemetry logs directory (analysis.jsonl)
+├── memory/             # In-memory patient context and session management
+├── models/             # Local mock and generative model specifications
+├── tools/              # MCP-compatible tools for OpenFDA, RxNav, and web search
+├── utils/              # Utility helper scripts (logger, etc.)
+├── config.py           # Centralized configuration management
+├── main.py             # CLI entrypoint for running the pipeline in terminal
+├── requirements.txt    # Python package dependencies
+└── README.md           # Project documentation
 ```
-
----
-
-## 🧪 Example Outputs
-
-<details>
-<summary><b>🚨 Example 1: Aspirin + Warfarin</b></summary>
-
-```markdown
-## Your medications
-- Aspirin
-- Warfarin
-
-## What looks safe
-No minor interactions found.
-
-## Watch out for
-None
-
-## See a doctor today
-### Aspirin & Warfarin
-**Severity:** [Major Risk]
-**Source:** OpenFDA
-**Explanation:** OpenFDA serious reaction keyword detected: haemorrhage.
-**Top reported adverse events:**
-- Dyspnoea
-- International Normalised Ratio Increased
-- Fatigue
-**Recommended Action:** Please consult your doctor due to potential severe risks.
-
-## Why this matters
-- Aspirin + Warfarin: This carries severe risks such as bleeding or kidney issues and requires medical oversight.
-
-## Disclaimer
-This report is for information only. It is not medical advice. Always confirm with your doctor or pharmacist before changing any medication.
-```
-
-</details>
-
-<details>
-<summary><b>⚠️ Example 2: Metformin + Ibuprofen + Lisinopril</b></summary>
-
-```markdown
-## Your medications
-- Metformin
-- Ibuprofen
-- Lisinopril
-
-## What looks safe
-No minor interactions found.
-
-## Watch out for
-None
-
-## See a doctor today
-### Metformin & Ibuprofen
-**Severity:** [Major Risk]
-**Source:** OpenFDA
-**Explanation:** OpenFDA serious reaction keyword detected: kidney.
-**Top reported adverse events:**
-- Acute Kidney Injury
-- Nausea
-- Chronic Kidney Disease
-**Recommended Action:** Please consult your doctor due to potential severe risks.
-
-### Metformin & Lisinopril
-**Severity:** [Major Risk]
-**Source:** OpenFDA
-**Explanation:** OpenFDA serious reaction keyword detected: kidney.
-**Top reported adverse events:**
-- Nausea
-- Diarrhoea
-- Fatigue
-**Recommended Action:** Please consult your doctor due to potential severe risks.
-
-### Ibuprofen & Lisinopril
-**Severity:** [Major Risk]
-**Source:** OpenFDA
-**Explanation:** OpenFDA serious reaction keyword detected: kidney.
-**Top reported adverse events:**
-- Fatigue
-- Pain
-- Chronic Kidney Disease
-**Recommended Action:** Please consult your doctor due to potential severe risks.
-
-## Why this matters
-- Metformin + Ibuprofen: This carries severe risks such as bleeding or kidney issues and requires medical oversight.
-- Metformin + Lisinopril: This carries severe risks such as bleeding or kidney issues and requires medical oversight.
-- Ibuprofen + Lisinopril: This carries severe risks such as bleeding or kidney issues and requires medical oversight.
-
-## Disclaimer
-This report is for information only. It is not medical advice. Always confirm with your doctor or pharmacist before changing any medication.
-```
-
-</details>
 
 ---
 
@@ -202,27 +101,89 @@ This report is for information only. It is not medical advice. Always confirm wi
 - **Agent Framework**: Google ADK (Agent Development Kit)
 - **Frontend**: Streamlit
 - **Data Validation**: Pydantic
-- **Networking**: HTTPX / Requests
-- **Clinical APIs**: OpenFDA (Adverse Events), RxNav (Concept IDs), DrugBank (Interactions)
+- **Networking**: Requests
+- **Clinical APIs**: OpenFDA (Adverse Events), RxNav (Concept IDs & Interactions)
+
+---
+
+## ⚙️ Installation & Usage
+
+### 1. Installation
+Clone the repository and set up a virtual environment:
+```bash
+# Set up virtual environment
+python -m venv .venv
+
+# Activate the virtual environment
+# Windows:
+.venv\Scripts\activate
+# Mac/Linux:
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 2. Configure Environment
+Create a `.env` file in the root directory (refer to `.env` or `config.py` for variables):
+```env
+USE_REAL_LLM=False
+ENABLE_MEMORY=True
+ENABLE_GUARDRAILS=True
+ENABLE_EVALUATOR=True
+ENABLE_PDF_EXPORT=True
+ENABLE_MARKDOWN_EXPORT=True
+APP_TITLE="MediTrace — Medication Safety Checker"
+LOG_LEVEL=INFO
+```
+
+### 3. Running the App
+
+#### Streamlit Web UI
+```bash
+streamlit run frontend/app.py
+```
+
+#### Command Line Interface (CLI)
+```bash
+python main.py
+```
+
+---
+
+## 🧪 Example Outputs
+*Note: Real screenshots of the application UI will be added in future updates.*
+
+### Major Risk
+*Screenshot placeholder illustrating a severe interaction card (e.g., Metformin + Ibuprofen causing potential kidney complications) with high severity alerts and recommendations.*
+
+### Moderate Risk
+*Screenshot placeholder showing a moderate warning badge, adverse event frequencies, and standard medical counseling advice.*
+
+### Safe Analysis
+*Screenshot placeholder depicting a clean green assessment indicating no known adverse interactions found.*
 
 ---
 
 ## ⚠️ Safety & Disclaimer
 > [!WARNING]
 > **Not Medical Advice**  
-> MediTrace is a software engineering capstone project. All generated reports are for **informational purposes only**.
+> MediTrace is a software engineering portfolio project. All generated reports are for **informational purposes only**.
 > - OpenFDA data consists of reported adverse events and **does not prove causation** (i.e., that a drug combination explicitly caused the event).
 > - You should **always consult healthcare professionals** (doctors, pharmacists) before starting, stopping, or altering any medication regimen.
 
 ---
 
 ## 🔮 Future Improvements
-- **Optical Character Recognition (OCR)**: Integrating Vision models to extract medications directly from images of prescription bottles.
-- **Production Caching**: Adding Redis-backed session management for large-scale deployments.
-- **Cloud Deployment**: Containerizing the application for Google Cloud Run deployment with Vertex AI.
+- **OCR prescription upload**: Integrating vision models to extract medication names directly from prescription bottle photos.
+- **Better patient profiles**: Expanding demographics (age, weight, conditions) for highly personalized risk calculations.
+- **Better explanation engine**: Refining the LLM prompt templates to provide deeper clinical details.
+- **More clinical databases**: Integrating additional medical knowledge graphs and database sources.
+- **Cloud deployment**: Containerizing the project for public web access on GCP Cloud Run.
+- **Better analytics**: Constructing detailed dashboards for tracking historical medication safety checks.
 
 ---
 
 ## 📄 License
-This project is provided for educational and portfolio purposes.
+This project is provided for educational and portfolio purposes.  
 All rights are reserved by the author.

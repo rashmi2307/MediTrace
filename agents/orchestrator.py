@@ -72,21 +72,30 @@ async def run_meditrace(user_input: str, user_id: str, session_id: str) -> str:
             from tools.rxnav_mcp import get_rxcui
             
             print("--- DEBUG LOCAL PIPELINE ---")
+            import re
+            raw_tokens = [w.strip() for w in re.split(r'[, ]+', user_input) if w.strip()]
+            print("Raw extracted tokens:", raw_tokens)
+            
             extracted_drugs = extract_drugs_deterministic(user_input)
-            print("extracted_drugs before validation:", extracted_drugs)
+            print("Normalized tokens:", extracted_drugs)
             
             valid_drugs = []
             for d in extracted_drugs:
                 try:
-                    if get_rxcui(d):
+                    rxcui = get_rxcui(d)
+                    print(f"RxNav lookup result for '{d}': {rxcui}")
+                    if rxcui:
                         valid_drugs.append(d)
-                except Exception:
+                except Exception as e:
+                    print(f"RxNav lookup result for '{d}': FAILED (Error: {e})")
+                    # If lookup failed due to network / API error, do NOT discard the drug. Keep it to continue analysis.
+                    valid_drugs.append(d)
                     log_api_failures += 1
             
-            print("valid_drugs:", valid_drugs)
+            print("Final extracted medication list:", valid_drugs)
             
-            if len(valid_drugs) < 2:
-                return "I could not detect at least two valid medications. Please enter medication names such as metformin, ibuprofen, aspirin, or cetirizine."
+            if len(valid_drugs) < 1:
+                return "I could not detect any valid medications. Please enter medication names such as metformin, ibuprofen, aspirin, or cetirizine."
                 
             extracted_drugs = valid_drugs
             log_extracted = extracted_drugs

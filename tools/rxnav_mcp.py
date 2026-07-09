@@ -16,12 +16,18 @@ def get_rxcui(drug_name: str) -> str:
     try:
         response = requests.get(f"{BASE_URL}/rxcui.json", params={"name": drug_name}, timeout=15)
         if response.status_code != 200:
-            return ""
+            response.raise_for_status()
         data = response.json()
+        if "idGroup" not in data or "rxnormId" not in data["idGroup"]:
+            return ""
         rxcui = data["idGroup"]["rxnormId"][0]
         _RXCUI_CACHE[key] = rxcui
         return rxcui
-    except Exception:
+    except requests.exceptions.RequestException as e:
+        import logging
+        logging.error(f"RxNav API connection failure for {drug_name}: {e}")
+        raise
+    except (KeyError, IndexError):
         return ""
 
 @tool
